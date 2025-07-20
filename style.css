@@ -61,7 +61,7 @@ body {
 /* chat section */
 .chatbox {
   margin: 40px 0;
-  border: 2px solid #000;
+  border: 2px solid #ff003b; /* Bright red */
   border-radius: 8px;
   padding: 26px;
 }
@@ -86,7 +86,7 @@ body {
   width: 100%;
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: #ff003b; /* Bright red */
   font-size: 18px;
 }
 
@@ -113,7 +113,7 @@ body {
 
 .chat-form button {
   font-size: 18px;
-  background: #000;
+  background: #e3a535; /* Gold */
   color: #fff;
   border: none;
   padding: 12px;
@@ -127,7 +127,7 @@ body {
 }
 
 .chat-form button:hover {
-  background: #666666;
+  background: #ff003b; /* Bright red */
 }
 
 .chat-form button:focus {
@@ -167,7 +167,7 @@ body {
 }
 
 .site-footer a:hover {
-  color: #666666;
+  color: #e3a535; /* Gold */
 }
 
 /* products grid */
@@ -180,7 +180,7 @@ body {
 
 .product-card {
   flex: 0 1 calc(33.333% - 14px);
-  border: 1px solid #ccc;
+  border: 2px solid #ff003b; /* Bright red */
   padding: 15px;
   border-radius: 4px;
   display: flex;
@@ -206,6 +206,7 @@ body {
 .product-card h3 {
   font-size: 16px;
   margin-bottom: 8px;
+  color: #e3a535; /* Gold */
 }
 
 .product-card p {
@@ -217,13 +218,14 @@ body {
 .selected-products {
   margin: 40px 0;
   padding: 20px;
-  border: 2px solid #000;
+  border: 2px solid #ff003b; /* Bright red */
   border-radius: 8px;
 }
 
 .selected-products h2 {
   font-size: 20px;
   margin-bottom: 20px;
+  color: #e3a535; /* Gold */
 }
 
 #selectedProductsList {
@@ -239,7 +241,7 @@ body {
   font-size: 18px;
   font-weight: 500;
   color: #fff;
-  background: #000;
+  background: #e3a535; /* Gold */
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -247,9 +249,14 @@ body {
 }
 
 .generate-btn:hover {
-  background: #666;
+  background: #ff003b; /* Bright red */
 }
 
 .generate-btn i {
   margin-right: 8px;
+}
+
+/* Add a thicker border for selected product cards */
+.product-card.selected {
+  border: 4px solid #e3a535; /* Gold */
 }
