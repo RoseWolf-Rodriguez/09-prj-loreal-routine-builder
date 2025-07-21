@@ -214,6 +214,19 @@ body {
   color: #666;
 }
 
+.product-card .product-description {
+  font-size: 16px; /* Increase font size */
+  color: #333;
+  margin-top: 8px;
+  line-height: 1.6; /* Improve readability */
+  max-height: 120px; /* Limit height */
+  overflow-y: auto; /* Enable scrolling */
+  padding: 8px;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
 /* selected products */
 .selected-products {
   margin: 40px 0;

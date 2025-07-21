@@ -50,13 +50,41 @@ function updateSelectedProducts() {
     selectedProductsList.innerHTML = selectedProducts
       .map(
         (product) => `
-      <div class="selected-product">
+      <div class="selected-product" data-name="${product.name}">
         <img src="${product.image}" alt="${product.name}">
         <p>${product.name}</p>
       </div>
     `
       )
       .join("");
+
+    // Add click event listeners to remove products from the list
+    const selectedProductElements =
+      document.querySelectorAll(".selected-product");
+    selectedProductElements.forEach((element) => {
+      element.addEventListener("click", () => {
+        const productName = element.getAttribute("data-name");
+        const productIndex = selectedProducts.findIndex(
+          (p) => p.name === productName
+        );
+
+        if (productIndex !== -1) {
+          // Remove product from the selected list
+          selectedProducts.splice(productIndex, 1);
+
+          // Remove the "selected" class from the corresponding product card
+          const productCard = document.querySelector(
+            `.product-card[data-name="${productName}"]`
+          );
+          if (productCard) {
+            productCard.classList.remove("selected");
+          }
+
+          // Update the selected products list
+          updateSelectedProducts();
+        }
+      });
+    });
   }
 }
 
@@ -70,6 +98,7 @@ function displayProducts(products) {
       <div class="product-info">
         <h3>${product.name}</h3>
         <p>${product.brand}</p>
+        <p class="product-description">${product.description}</p> <!-- Add description -->
       </div>
     </div>
   `
@@ -104,18 +133,46 @@ categoryFilter.addEventListener("change", async (e) => {
 /* Import the OpenAI API key from secrets.js */
 // Ensure secrets.js is included in your HTML file before this script
 // <script src="secrets.js"></script>
+if (typeof OPENAI_API_KEY === "undefined") {
+  console.error("OPENAI_API_KEY is not defined. Ensure secrets.js is loaded.");
+}
 
-/* Chat form submission handler - connects to OpenAI */
-chatForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
+/* Track conversation history */
+const conversationHistory = [
+  {
+    role: "system",
+    content: "You are a helpful assistant for skincare advice. You only respond with products by L'Oreal.",
+  },
+];
 
-  // Get user input and clear the input field
-  const chatInput = document.getElementById("chatInput");
-  const userMessage = chatInput.value;
-  chatInput.value = "";
+/* Handle "Generate Routine" button click */
+const generateRoutineButton = document.getElementById("generateRoutine");
+generateRoutineButton.addEventListener("click", async () => {
+  if (selectedProducts.length === 0) {
+    alert(
+      "No products selected. Please select products to generate a routine."
+    );
+    return;
+  }
+
+  // Collect selected products
+  const routineProducts = selectedProducts.map((product) => ({
+    name: product.name,
+    brand: product.brand,
+    category: product.category,
+    description: product.description,
+  }));
+
+  // Add user message to conversation history
+  conversationHistory.push({
+    role: "user",
+    content: `Here are the selected products: ${JSON.stringify(
+      routineProducts
+    )}`,
+  });
 
   // Show loading message
-  chatWindow.innerHTML = "Thinking...";
+  chatWindow.innerHTML = "Generating your routine...";
 
   try {
     // Make API request to OpenAI
@@ -126,29 +183,88 @@ chatForm.addEventListener("submit", async (e) => {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o", // Use the gpt-4o model
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful assistant for skincare advice.",
-          },
-          { role: "user", content: userMessage },
-        ],
+        model: "gpt-4o",
+        messages: conversationHistory,
+        max_tokens: 500,
+        temperature: 0.7,
       }),
     });
 
     // Parse the response
     const data = await response.json();
 
-    // Display the assistant's response in the chat window
+    // Add assistant response to conversation history
     if (data.choices && data.choices[0].message.content) {
-      chatWindow.innerHTML = data.choices[0].message.content;
+      conversationHistory.push({
+        role: "assistant",
+        content: data.choices[0].message.content,
+      });
+
+      // Display the generated routine in the chat window
+      chatWindow.innerHTML = `
+        <h3>Your Routine:</h3>
+        <p>${data.choices[0].message.content}</p>
+        <p><em>You can ask follow-up questions below.</em></p>
+      `;
     } else {
-      chatWindow.innerHTML = "Sorry, I couldn't understand that.";
+      chatWindow.innerHTML = "Sorry, I couldn't generate a routine.";
     }
   } catch (error) {
-    // Handle errors
-    chatWindow.innerHTML = "An error occurred. Please try again.";
+    chatWindow.innerHTML =
+      "An error occurred while generating the routine. Please try again.";
+    console.error("Error:", error);
+  }
+});
+
+/* Chat form submission handler - connects to OpenAI */
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  // Get user input and clear the input field
+  const chatInput = document.getElementById("userInput");
+  const userMessage = chatInput.value;
+  chatInput.value = "";
+
+  // Add user message to conversation history
+  conversationHistory.push({ role: "user", content: userMessage });
+
+  // Show user message in chat window
+  chatWindow.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
+  chatWindow.innerHTML += `<p>Thinking...</p>`;
+
+  try {
+    // Make API request to OpenAI
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: conversationHistory,
+        max_tokens: 500,
+        temperature: 0.7,
+      }),
+    });
+
+    // Parse the response
+    const data = await response.json();
+
+    // Add assistant response to conversation history
+    if (data.choices && data.choices[0].message.content) {
+      conversationHistory.push({
+        role: "assistant",
+        content: data.choices[0].message.content,
+      });
+
+      // Display the assistant's response in the chat window
+      chatWindow.innerHTML += `<p><strong>Assistant:</strong> ${data.choices[0].message.content}</p>`;
+    } else {
+      chatWindow.innerHTML += `<p><strong>Assistant:</strong> Sorry, I couldn't understand that.</p>`;
+    }
+  } catch (error) {
+    chatWindow.innerHTML += `<p><strong>Assistant:</strong> An error occurred. Please try again.</p>`;
     console.error("Error:", error);
   }
 });
