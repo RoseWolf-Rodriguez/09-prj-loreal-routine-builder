@@ -21,6 +21,23 @@ async function loadProducts() {
 /* Track selected products */
 const selectedProducts = [];
 
+/* Load selected products from localStorage */
+function loadSelectedProducts() {
+  const storedProducts = localStorage.getItem("selectedProducts");
+  if (storedProducts) {
+    const parsedProducts = JSON.parse(storedProducts);
+    parsedProducts.forEach((product) => {
+      selectedProducts.push(product);
+    });
+    updateSelectedProducts();
+  }
+}
+
+/* Save selected products to localStorage */
+function saveSelectedProducts() {
+  localStorage.setItem("selectedProducts", JSON.stringify(selectedProducts));
+}
+
 /* Toggle product selection */
 function toggleProductSelection(product, cardElement) {
   const productIndex = selectedProducts.findIndex(
@@ -38,6 +55,14 @@ function toggleProductSelection(product, cardElement) {
   }
 
   updateSelectedProducts();
+  saveSelectedProducts(); // Save changes to localStorage
+}
+
+/* Clear all selected products */
+function clearSelectedProducts() {
+  selectedProducts.length = 0; // Clear the array
+  updateSelectedProducts();
+  saveSelectedProducts(); // Save changes to localStorage
 }
 
 /* Update the Selected Products section */
@@ -53,17 +78,17 @@ function updateSelectedProducts() {
       <div class="selected-product" data-name="${product.name}">
         <img src="${product.image}" alt="${product.name}">
         <p>${product.name}</p>
+        <button class="remove-btn" data-name="${product.name}">Remove</button>
       </div>
     `
       )
       .join("");
 
-    // Add click event listeners to remove products from the list
-    const selectedProductElements =
-      document.querySelectorAll(".selected-product");
-    selectedProductElements.forEach((element) => {
-      element.addEventListener("click", () => {
-        const productName = element.getAttribute("data-name");
+    // Add click event listeners to remove individual products
+    const removeButtons = document.querySelectorAll(".remove-btn");
+    removeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const productName = button.getAttribute("data-name");
         const productIndex = selectedProducts.findIndex(
           (p) => p.name === productName
         );
@@ -72,16 +97,9 @@ function updateSelectedProducts() {
           // Remove product from the selected list
           selectedProducts.splice(productIndex, 1);
 
-          // Remove the "selected" class from the corresponding product card
-          const productCard = document.querySelector(
-            `.product-card[data-name="${productName}"]`
-          );
-          if (productCard) {
-            productCard.classList.remove("selected");
-          }
-
           // Update the selected products list
           updateSelectedProducts();
+          saveSelectedProducts(); // Save changes to localStorage
         }
       });
     });
@@ -141,7 +159,8 @@ if (typeof OPENAI_API_KEY === "undefined") {
 const conversationHistory = [
   {
     role: "system",
-    content: "You are a helpful assistant for skincare advice. You only respond with products by L'Oreal.",
+    content:
+      "You are a helpful assistant for skincare advice. You only respond with products by L'Oreal.",
   },
 ];
 
@@ -267,4 +286,16 @@ chatForm.addEventListener("submit", async (e) => {
     chatWindow.innerHTML += `<p><strong>Assistant:</strong> An error occurred. Please try again.</p>`;
     console.error("Error:", error);
   }
+});
+
+/* Add event listener for the "Clear All" button */
+document.getElementById("clearAllBtn").addEventListener("click", () => {
+  if (confirm("Are you sure you want to clear all selected products?")) {
+    clearSelectedProducts();
+  }
+});
+
+/* Restore selected products on page load */
+document.addEventListener("DOMContentLoaded", () => {
+  loadSelectedProducts();
 });
